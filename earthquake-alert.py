@@ -38,10 +38,10 @@ def get_earthquakes():
 	global last_date
 	source = urllib.request.urlopen('http://irsc.ut.ac.ir/events_list.xml').read()
 	soup = bs.BeautifulSoup(source,'lxml')
-	index = 0
-	for item in soup.find_all('item'):
-		if index == 0:
-			index += 1
+
+	for item in list(reversed(soup.find_all('item'))):
+		header = item.find('licence')
+		if header:
 			continue
 		mag = item.mag.text
 		reg1 = item.reg1.text
@@ -53,17 +53,17 @@ def get_earthquakes():
 		date_string = item.date.text
 		date = datetime.strptime(date_string, '%Y-%m-%d %H:%M:%S')
 		if date > last_date:
-			last_date = date
 			if check_lat_long(float(latitude), float(longitude)) or check_location(reg):
-				send_notification("An earthquake with Magnitude of "+mag+" has occurred in "+reg1+"at "+date_string)
-		else:
-			break
+				last_date = date
+				send_notification("An earthquake with Magnitude of "+mag+" has occurred in "+reg1)
 
 
-last_date = datetime.now()
+last_date = datetime.utcnow() - timedelta(days=2)
 bot = telegram.Bot(token=TOKEN)
 
-send_notification("test")
+#send_notification("test")
+
+get_earthquakes()
 
 schedule.every(10).minutes.do(get_earthquakes)
 
