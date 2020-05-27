@@ -29,14 +29,26 @@ def send_notification(text):
 	source = urllib.request.urlopen("https://api.telegram.org/bot"+TOKEN+"/getUpdates").read()
 	messages = json.loads(source.decode('utf-8'))
 	chat_ids = set()
+	chat_ids_file = open('chat-ids.txt', 'r') 
+	Lines = chat_ids_file.readlines()
+	for line in Lines:
+		if line != '\n':
+			chat_ids.add(int(line))
 	for message in messages['result']:
 		chat_ids.add(message['message']['from']['id'])
+	with open('chat-ids.txt', 'w') as f:
+		for item in chat_ids:
+			f.write("%s\n" % item)
 	for chat_id in chat_ids:
 		bot.send_message(chat_id=chat_id, text=text)
 
 def get_earthquakes():	
 	global last_date
-	source = urllib.request.urlopen('http://irsc.ut.ac.ir/events_list.xml').read()
+	try:
+		source = urllib.request.urlopen('http://irsc.ut.ac.ir/events_list.xml').read()
+	except:
+		print("connection to irsc failed")
+		return
 	soup = bs.BeautifulSoup(source,'lxml')
 
 	for item in list(reversed(soup.find_all('item'))):
